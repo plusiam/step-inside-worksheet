@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>step-inside 학습지</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: '맑은 고딕', sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      line-height: 1.6;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+    
+    h1, h2 {
+      color: #2b3e50;
+    }
+    
+    section {
+      background-color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 8px;
+      margin-bottom: 16px;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    
+    /* 제목 및 정보 입력 필드 스타일 */
+    input[style*="border: none"] {
+      padding: 5px 0;
+      font-family: inherit;
+    }
+    
+    input[style*="border: none"]:focus {
+      outline: none;
+      border-bottom: 2px solid #3498db !important;
+    }
+    
+    /* 동적 요소 스타일 */
+    .learning-item, .question-item, .answer-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 10px;
+    }
+    
+    .learning-item input, .question-item input {
+      flex: 1;
+    }
+    
+    .answer-item {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .answer-item label {
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    .question-preview {
+      font-style: italic;
+      color: #666;
+      margin-bottom: 8px;
+      padding: 8px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      border-left: 3px solid #3498db;
+      min-height: 20px;
+    }
+    
+    .add-btn {
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 10px;
+      transition: background-color 0.3s;
+    }
+    
+    .add-btn:hover {
+      background-color: #229954;
+    }
+    
+    .remove-btn {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      min-width: 30px;
+      transition: background-color 0.3s;
+    }
+    
+    .remove-btn:hover {
+      background-color: #c0392b;
+    }
+    
+    a {
+      color: #0066cc;
+      text-decoration: none;
+    }
+    
+    a:hover {
+      text-decoration: underline;
+    }
+    
+    .download-section {
+      background-color: #e8f4fd;
+      border: 2px solid #3498db;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .download-btn {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      margin: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+    
+    .download-btn:hover {
+      background-color: #2980b9;
+    }
+    
+    .download-btn:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+    }
+    
+    .loading {
+      color: #7f8c8d;
+      font-style: italic;
+    }
+    
+    /* 인쇄 시 스타일 */
+    @media print {
+      body {
+        background-color: white;
+        padding: 0;
+        max-width: none;
+      }
+      .download-section {
+        display: none;
+      }
+      section {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+      }
+      input, textarea {
+        border: none !important;
+        border-bottom: 1px solid #333 !important;
+        background: transparent !important;
+        -webkit-appearance: none;
+        box-shadow: none !important;
+      }
+      .question-preview {
+        background: #f5f5f5 !important;
+        border-left: 2px solid #333 !important;
+        color: #333 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="worksheet-content">
+    <section>
+      <h1><input type="text" id="worksheetTitle" value="step-inside" style="font-size: 28px; font-weight: bold; text-align: center; border: none; background: transparent;" /></h1>
+      <h2><input type="text" id="worksheetSubtitle" placeholder="부제목을 입력하세요" style="font-size: 20px; text-align: center; border: none; background: transparent;" /></h2>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
+        <p><strong>과목:</strong> <input type="text" id="subject" placeholder="과목명" style="border: none; border-bottom: 1px solid #ccc; background: transparent;" /></p>
+        <p><strong>날짜:</strong> <input type="text" id="date" placeholder="YYYY-MM-DD" style="border: none; border-bottom: 1px solid #ccc; background: transparent;" /></p>
+      </div>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px;">
+        <p><strong>학교:</strong> <input type="text" id="school" placeholder="○○중학교" style="border: none; border-bottom: 1px solid #ccc; background: transparent;" /></p>
+        <p><strong>학년반:</strong> <input type="text" id="classInfo" placeholder="○학년 ○반" style="border: none; border-bottom: 1px solid #ccc; background: transparent;" /></p>
+        <p><strong>이름:</strong> <input type="text" id="studentName" placeholder="이름" style="border: none; border-bottom: 1px solid #ccc; background: transparent;" /></p>
+      </div>
+    </section>
+
+    <section>
+      <h2>1단계. 영상 시청: 새롭게 알게 된 내용 정리하기</h2>
+      <p>
+        아래 영상을 시청하고, 새롭게 알게 된 내용을 적어보세요.<br>
+        <a href="https://youtu.be/IilOyOQGLJk?si=YBh6lU9ICGCv-GJo" target="_blank">▶ 안중근 의사와 홍범도 장군 이야기 시청하기</a>
+      </p>
+      
+      <div id="learningContent">
+        <div class="learning-item">
+          <input type="text" placeholder="새롭게 알게 된 내용을 적어보세요" />
+          <button type="button" onclick="removeLearningItem(this)" class="remove-btn">✕</button>
+        </div>
+      </div>
+      <button type="button" onclick="addLearningItem()" class="add-btn">+ 내용 추가하기</button>
+    </section>
+    
+    <section>
+      <h2>2단계. 인물에게 질문 던지기</h2>
+      <p>영상 속 인물들에게 묻고 싶은 질문을 만들어보세요.</p>
+      
+      <div id="questionContent">
+        <div class="question-item">
+          <label>기본 질문:</label>
+          <input type="text" placeholder="왜 그런 선택을 하셨나요?" />
+        </div>
+        <div class="question-item">
+          <label>추가 질문 1:</label>
+          <input type="text" placeholder="인물에게 묻고 싶은 질문을 적어보세요" />
+          <button type="button" onclick="removeQuestionItem(this)" class="remove-btn">✕</button>
+        </div>
+      </div>
+      <button type="button" onclick="addQuestionItem()" class="add-btn">+ 질문 추가하기</button>
+    </section>
+    
+    <section>
+      <h2>3단계. 질문에 답해보기</h2>
+      <p>2단계에서 만든 질문들에 인물의 입장이 되어 답해보세요.</p>
+      
+      <div id="answerContent">
+        <div class="answer-item">
+          <label id="answer-label-0">기본 질문에 대한 답:</label>
+          <div class="question-preview" id="question-preview-0" style="font-style: italic; color: #666; margin-bottom: 8px; padding: 8px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #3498db;">질문: 왜 그런 선택을 하셨나요?</div>
+          <textarea rows="3" placeholder="인물의 입장에서 답변해보세요"></textarea>
+        </div>
+        <div class="answer-item">
+          <label id="answer-label-1">추가 질문 1에 대한 답:</label>
+          <div class="question-preview" id="question-preview-1" style="font-style: italic; color: #666; margin-bottom: 8px; padding: 8px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #3498db;">질문: 인물에게 묻고 싶은 질문을 적어보세요</div>
+          <textarea rows="3" placeholder="인물의 입장에서 답변해보세요"></textarea>
+        </div>
+      </div>
+    </section>
+    
+    <section>
+      <h2>4단계. 나의 가치관과 마주하며 성찰하기</h2>
+      <label>Q. 영상 속 인물들의 이야기를 보며 어떤 느낌이나 감정이 들었나요?</label>
+      <textarea id="myFeelings" rows="3" placeholder="인상 깊었던 장면이나 그때 느꼈던 감정을 솔직하게 적어보세요"></textarea>
+      
+      <label>Q. 이들의 선택과 행동에서 본받고 싶은 점은 무엇인가요?</label>
+      <textarea id="roleModel" rows="3" placeholder="앞으로 실천하고 싶은 구체적인 행동을 적어보세요"></textarea>
+      
+      <label>Q. 나는 어떤 사람으로 살아가고 싶은가요?</label>
+      <textarea id="lifeGoal" rows="3" placeholder="나의 다짐이나 목표를 적어보세요"></textarea>
+    </section>
+    
+    <section class="download-section">
+      <h3>📥 학습지 저장하기</h3>
+      <p>작성을 완료하셨다면 이미지나 PDF로 저장할 수 있습니다.</p>
+      <button class="download-btn" onclick="downloadAsImage()">🖼️ 이미지로 저장</button>
+      <button class="download-btn" onclick="downloadAsPDF()">📄 PDF로 저장</button>
+      <div id="loading-message" class="loading" style="display: none;">처리 중입니다...</div>
+    </section>
+  </div>
+
+  <script>
+    // 로딩 메시지 표시/숨김
+    function showLoading() {
+      document.getElementById('loading-message').style.display = 'block';
+      document.querySelectorAll('.download-btn').forEach(btn => btn.disabled = true);
+    }
+    
+    function hideLoading() {
+      document.getElementById('loading-message').style.display = 'none';
+      document.querySelectorAll('.download-btn').forEach(btn => btn.disabled = false);
+    }
+    
+    // 파일명 생성 (학교, 학년반, 이름 + 날짜)
+    function generateFileName() {
+      const school = document.getElementById('school').value.trim();
+      const classInfo = document.getElementById('classInfo').value.trim();
+      const studentName = document.getElementById('studentName').value.trim();
+      const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      let fileName = '학습지';
+      if (school) fileName += `_${school}`;
+      if (classInfo) fileName += `_${classInfo}`;
+      if (studentName) fileName += `_${studentName}`;
+      fileName += `_${date}`;
+      
+      return fileName;
+    }
+    
+    // 이미지로 다운로드
+    async function downloadAsImage() {
+      showLoading();
+      
+      try {
+        // 다운로드 섹션을 임시로 숨김
+        const downloadSection = document.querySelector('.download-section');
+        downloadSection.style.display = 'none';
+        
+        const canvas = await html2canvas(document.getElementById('worksheet-content'), {
+          scale: 2, // 고화질
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#f5f7fa'
+        });
+        
+        // 다운로드 섹션 다시 표시
+        downloadSection.style.display = 'block';
+        
+        // 캔버스를 이미지로 변환하여 다운로드
+        const link = document.createElement('a');
+        link.download = generateFileName() + '.png';
+        link.href = canvas.toDataURL();
+        link.click();
+        
+      } catch (error) {
+        alert('이미지 저장 중 오류가 발생했습니다: ' + error.message);
+      } finally {
+        hideLoading();
+      }
+    }
+    
+    // PDF로 다운로드
+    async function downloadAsPDF() {
+      showLoading();
+      
+      try {
+        // 다운로드 섹션을 임시로 숨김
+        const downloadSection = document.querySelector('.download-section');
+        downloadSection.style.display = 'none';
+        
+        const canvas = await html2canvas(document.getElementById('worksheet-content'), {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#f5f7fa'
+        });
+        
+        // 다운로드 섹션 다시 표시
+        downloadSection.style.display = 'block';
+        
+        const imgData = canvas.toDataURL('image/png');
+        
+        // jsPDF 생성
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+        
+        // A4 크기에 맞게 이미지 크기 조정
+        const imgWidth = 190; // A4 너비 (여백 고려)
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        let heightLeft = imgHeight;
+        let position = 10; // 상단 여백
+        
+        // 첫 페이지
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= 277; // A4 높이에서 여백 제외
+        
+        // 추가 페이지가 필요한 경우
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight + 10;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+          heightLeft -= 277;
+        }
+        
+        pdf.save(generateFileName() + '.pdf');
+        
+      } catch (error) {
+        alert('PDF 저장 중 오류가 발생했습니다: ' + error.message);
+      } finally {
+        hideLoading();
+      }
+    }
+    
+    // 자동 저장 기능 (localStorage 활용)
+    function autoSave() {
+      const data = {
+        worksheetTitle: document.getElementById('worksheetTitle').value,
+        worksheetSubtitle: document.getElementById('worksheetSubtitle').value,
+        subject: document.getElementById('subject').value,
+        date: document.getElementById('date').value,
+        school: document.getElementById('school').value,
+        classInfo: document.getElementById('classInfo').value,
+        studentName: document.getElementById('studentName').value,
+        learningItems: Array.from(document.querySelectorAll('#learningContent input')).map(input => input.value),
+        questionItems: Array.from(document.querySelectorAll('#questionContent input')).map(input => input.value),
+        answerItems: Array.from(document.querySelectorAll('#answerContent textarea')).map(textarea => textarea.value),
+        myFeelings: document.getElementById('myFeelings').value,
+        roleModel: document.getElementById('roleModel').value,
+        lifeGoal: document.getElementById('lifeGoal').value
+      };
+      localStorage.setItem('moralWorksheet', JSON.stringify(data));
+    }
+    
+    // 저장된 데이터 불러오기
+    function loadSavedData() {
+      const saved = localStorage.getItem('moralWorksheet');
+      if (saved) {
+        const data = JSON.parse(saved);
+        
+        // 기본 필드들 복원 (날짜는 이미 설정되어 있지 않은 경우에만)
+        ['worksheetTitle', 'worksheetSubtitle', 'subject', 'school', 'classInfo', 'studentName', 'myFeelings', 'roleModel', 'lifeGoal'].forEach(key => {
+          const element = document.getElementById(key);
+          if (element && data[key]) element.value = data[key];
+        });
+        
+        // 날짜는 저장된 값이 있고, 현재 필드가 오늘 날짜인 경우에만 복원
+        const dateElement = document.getElementById('date');
+        const today = new Date().toISOString().split('T')[0];
+        if (data.date && dateElement.value === today) {
+          dateElement.value = data.date;
+        }
+        
+        // 학습 내용 복원
+        if (data.learningItems && data.learningItems.length > 1) {
+          // 기본 1개 제외하고 추가
+          for (let i = 1; i < data.learningItems.length; i++) {
+            addLearningItem();
+          }
+          // 값 설정
+          document.querySelectorAll('#learningContent input').forEach((input, index) => {
+            if (data.learningItems[index]) input.value = data.learningItems[index];
+          });
+        }
+        
+        // 질문 내용 복원
+        if (data.questionItems && data.questionItems.length > 2) {
+          // 기본 2개 제외하고 추가
+          for (let i = 2; i < data.questionItems.length; i++) {
+            addQuestionItem();
+          }
+        }
+        if (data.questionItems) {
+          document.querySelectorAll('#questionContent input').forEach((input, index) => {
+            if (data.questionItems[index]) input.value = data.questionItems[index];
+          });
+        }
+        
+        // 답변 내용 복원
+        if (data.answerItems) {
+          document.querySelectorAll('#answerContent textarea').forEach((textarea, index) => {
+            if (data.answerItems[index]) textarea.value = data.answerItems[index];
+          });
+        }
+        
+        // 질문 미리보기 업데이트
+        setTimeout(() => {
+          updateQuestionPreviews();
+          // 복원된 질문 입력 필드들에 이벤트 리스너 추가
+          document.querySelectorAll('#questionContent input').forEach(input => {
+            input.addEventListener('input', updateQuestionPreviews);
+          });
+        }, 100);
+      }
+    }
+    
+    // 학습 내용 추가
+    function addLearningItem() {
+      const container = document.getElementById('learningContent');
+      const newItem = document.createElement('div');
+      newItem.className = 'learning-item';
+      newItem.innerHTML = `
+        <input type="text" placeholder="새롭게 알게 된 내용을 적어보세요" />
+        <button type="button" onclick="removeLearningItem(this)" class="remove-btn">✕</button>
+      `;
+      container.appendChild(newItem);
+      
+      // 새로 추가된 입력 필드에 이벤트 리스너 추가
+      newItem.querySelector('input').addEventListener('input', autoSave);
+    }
+    
+    // 학습 내용 제거
+    function removeLearningItem(button) {
+      const container = document.getElementById('learningContent');
+      if (container.children.length > 1) {
+        button.parentElement.remove();
+        autoSave();
+      }
+    }
+    
+    // 질문 추가
+    function addQuestionItem() {
+      const container = document.getElementById('questionContent');
+      const questionCount = container.children.length;
+      const newItem = document.createElement('div');
+      newItem.className = 'question-item';
+      newItem.innerHTML = `
+        <label>추가 질문 ${questionCount - 1}:</label>
+        <input type="text" placeholder="인물에게 묻고 싶은 질문을 적어보세요" />
+        <button type="button" onclick="removeQuestionItem(this)" class="remove-btn">✕</button>
+      `;
+      container.appendChild(newItem);
+      
+      // 답변 섹션에도 해당 질문에 대한 답변 칸 추가
+      const answerContainer = document.getElementById('answerContent');
+      const newAnswer = document.createElement('div');
+      newAnswer.className = 'answer-item';
+      newAnswer.innerHTML = `
+        <label id="answer-label-${questionCount}">추가 질문 ${questionCount - 1}에 대한 답:</label>
+        <div class="question-preview" id="question-preview-${questionCount}" style="font-style: italic; color: #666; margin-bottom: 8px; padding: 8px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #3498db;">질문: 인물에게 묻고 싶은 질문을 적어보세요</div>
+        <textarea rows="3" placeholder="인물의 입장에서 답변해보세요"></textarea>
+      `;
+      answerContainer.appendChild(newAnswer);
+      
+      // 이벤트 리스너 추가
+      const newInput = newItem.querySelector('input');
+      newInput.addEventListener('input', function() {
+        autoSave();
+        updateQuestionPreviews();
+      });
+      newAnswer.querySelector('textarea').addEventListener('input', autoSave);
+      
+      // 질문 미리보기 즉시 업데이트
+      updateQuestionPreviews();
+    }
+    
+    // 질문 제거
+    function removeQuestionItem(button) {
+      const container = document.getElementById('questionContent');
+      const answerContainer = document.getElementById('answerContent');
+      
+      if (container.children.length > 2) { // 기본 질문 2개는 유지
+        const index = Array.from(container.children).indexOf(button.parentElement);
+        button.parentElement.remove();
+        
+        // 해당하는 답변 칸도 제거
+        if (answerContainer.children[index]) {
+          answerContainer.children[index].remove();
+        }
+        
+        // 라벨 번호 재정렬
+        updateQuestionLabels();
+        autoSave();
+      }
+    }
+    
+    // 질문 미리보기 업데이트
+    function updateQuestionPreviews() {
+      const questionInputs = document.querySelectorAll('#questionContent input');
+      questionInputs.forEach((input, index) => {
+        const preview = document.getElementById(`question-preview-${index}`);
+        if (preview) {
+          const questionText = input.value.trim() || input.placeholder;
+          preview.textContent = `질문: ${questionText}`;
+        }
+      });
+    }
+    
+    // 질문 라벨 번호 재정렬
+    function updateQuestionLabels() {
+      const questionItems = document.querySelectorAll('#questionContent .question-item');
+      const answerItems = document.querySelectorAll('#answerContent .answer-item');
+      
+      questionItems.forEach((item, index) => {
+        const label = item.querySelector('label');
+        if (index === 0) {
+          label.textContent = '기본 질문:';
+        } else {
+          label.textContent = `추가 질문 ${index}:`;
+        }
+      });
+      
+      answerItems.forEach((item, index) => {
+        const label = item.querySelector('label');
+        if (index === 0) {
+          label.textContent = '기본 질문에 대한 답:';
+        } else {
+          label.textContent = `추가 질문 ${index}에 대한 답:`;
+        }
+      });
+      
+      // 질문 미리보기도 업데이트
+      updateQuestionPreviews();
+    }
+    
+    // 페이지 로드 시 저장된 데이터 불러오기 및 이벤트 리스너 설정
+    window.addEventListener('load', function() {
+      // 오늘 날짜 자동 설정
+      const today = new Date().toISOString().split('T')[0];
+      const dateField = document.getElementById('date');
+      if (!dateField.value) {
+        dateField.value = today;
+      }
+      
+      loadSavedData();
+      
+      // 모든 입력 필드에 자동 저장 이벤트 리스너 추가
+      document.addEventListener('input', autoSave);
+      
+      // 질문 입력 필드에 미리보기 업데이트 이벤트 리스너 추가
+      document.querySelectorAll('#questionContent input').forEach(input => {
+        input.addEventListener('input', updateQuestionPreviews);
+      });
+      
+      // 초기 질문 미리보기 업데이트
+      updateQuestionPreviews();
+    });
+  </script>
+</body>
+</html>
