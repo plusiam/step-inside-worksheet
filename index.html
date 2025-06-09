@@ -307,6 +307,61 @@
       return fileName;
     }
     
+    // 입력 필드를 텍스트로 변환 (캡처용)
+    function replaceInputsWithText() {
+      const replacements = [];
+      
+      // 모든 input과 textarea 요소 찾기
+      const inputs = document.querySelectorAll('input[type="text"], textarea');
+      
+      inputs.forEach(input => {
+        // 값이 있는 경우에만 처리
+        const value = input.value.trim();
+        if (value) {
+          // 새로운 div 요소 생성
+          const replacement = document.createElement('div');
+          replacement.innerHTML = value;
+          
+          // 스타일 복사
+          const computedStyle = window.getComputedStyle(input);
+          replacement.style.cssText = input.style.cssText;
+          replacement.style.fontFamily = computedStyle.fontFamily;
+          replacement.style.fontSize = computedStyle.fontSize;
+          replacement.style.fontWeight = computedStyle.fontWeight;
+          replacement.style.color = computedStyle.color;
+          replacement.style.padding = computedStyle.padding;
+          replacement.style.margin = computedStyle.margin;
+          replacement.style.width = computedStyle.width;
+          replacement.style.minHeight = computedStyle.height;
+          replacement.style.textAlign = computedStyle.textAlign;
+          replacement.style.lineHeight = computedStyle.lineHeight;
+          replacement.style.borderBottom = input.style.borderBottom || '1px solid #333';
+          replacement.style.background = 'transparent';
+          replacement.style.whiteSpace = 'pre-wrap';
+          replacement.style.wordBreak = 'break-word';
+          
+          // 원본과 교체할 요소 저장
+          replacements.push({
+            original: input,
+            replacement: replacement,
+            parent: input.parentNode
+          });
+          
+          // 교체 실행
+          input.parentNode.replaceChild(replacement, input);
+        }
+      });
+      
+      return replacements;
+    }
+    
+    // 텍스트를 다시 입력 필드로 복원
+    function restoreInputs(replacements) {
+      replacements.forEach(({ original, replacement, parent }) => {
+        parent.replaceChild(original, replacement);
+      });
+    }
+    
     // 이미지로 다운로드
     async function downloadAsImage() {
       showLoading();
@@ -316,12 +371,18 @@
         const downloadSection = document.querySelector('.download-section');
         downloadSection.style.display = 'none';
         
+        // 입력 필드를 텍스트로 변환
+        const replacements = replaceInputsWithText();
+        
         const canvas = await html2canvas(document.getElementById('worksheet-content'), {
           scale: 2, // 고화질
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#f5f7fa'
         });
+        
+        // 입력 필드 복원
+        restoreInputs(replacements);
         
         // 다운로드 섹션 다시 표시
         downloadSection.style.display = 'block';
@@ -348,12 +409,18 @@
         const downloadSection = document.querySelector('.download-section');
         downloadSection.style.display = 'none';
         
+        // 입력 필드를 텍스트로 변환
+        const replacements = replaceInputsWithText();
+        
         const canvas = await html2canvas(document.getElementById('worksheet-content'), {
           scale: 2,
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#f5f7fa'
         });
+        
+        // 입력 필드 복원
+        restoreInputs(replacements);
         
         // 다운로드 섹션 다시 표시
         downloadSection.style.display = 'block';
