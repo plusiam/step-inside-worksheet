@@ -372,19 +372,20 @@
         const imgWidth = 190; // A4 너비 (여백 고려)
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
+        const pageHeight = 257; // A4 높이에서 상하 여백 20mm씩 제외 (297-40=257)
         let heightLeft = imgHeight;
-        let position = 10; // 상단 여백
+        let position = 20; // 상단 여백 20mm
         
         // 첫 페이지
         pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= 277; // A4 높이에서 여백 제외
+        heightLeft -= pageHeight;
         
         // 추가 페이지가 필요한 경우
         while (heightLeft > 0) {
-          position = heightLeft - imgHeight + 10;
+          position = heightLeft - imgHeight + 20; // 상단 여백 20mm
           pdf.addPage();
           pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-          heightLeft -= 277;
+          heightLeft -= pageHeight;
         }
         
         pdf.save(generateFileName() + '.pdf');
