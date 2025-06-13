@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>step-inside 학습지</title>
+  <title>step-inside 범용 학습지</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
@@ -29,7 +29,7 @@
       box-shadow: 0 4px 8px rgba(0,0,0,0.05);
     }
     
-    input[type="text"], textarea {
+    input[type="text"], input[type="url"], textarea, select {
       width: 100%;
       padding: 10px;
       border-radius: 8px;
@@ -38,6 +38,11 @@
       margin-bottom: 16px;
       resize: vertical;
       box-sizing: border-box;
+      font-family: inherit;
+    }
+    
+    select {
+      cursor: pointer;
     }
     
     /* 제목 및 정보 입력 필드 스타일 */
@@ -51,8 +56,60 @@
       border-bottom: 2px solid #3498db !important;
     }
     
+    /* 템플릿 선택 버튼 */
+    .template-selector {
+      background-color: #e8f4fd;
+      border: 2px solid #3498db;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .template-selector h3 {
+      margin-top: 0;
+      color: #2980b9;
+    }
+    
+    .template-btn {
+      background-color: white;
+      border: 2px solid #3498db;
+      padding: 8px 16px;
+      margin: 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+    
+    .template-btn:hover {
+      background-color: #3498db;
+      color: white;
+    }
+    
+    .template-btn.active {
+      background-color: #2980b9;
+      color: white;
+      border-color: #2980b9;
+    }
+    
+    /* 콘텐츠 정보 섹션 */
+    .content-info {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .content-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 15px;
+      align-items: start;
+    }
+    
     /* 동적 요소 스타일 */
-    .learning-item, .question-item, .answer-item {
+    .learning-item, .question-item, .answer-item, .reflection-item {
       display: flex;
       align-items: center;
       margin-bottom: 12px;
@@ -63,12 +120,12 @@
       flex: 1;
     }
     
-    .answer-item {
+    .answer-item, .reflection-item {
       flex-direction: column;
       align-items: stretch;
     }
     
-    .answer-item label {
+    .answer-item label, .reflection-item label {
       margin-bottom: 5px;
       font-weight: bold;
     }
@@ -82,6 +139,12 @@
       border-radius: 4px;
       border-left: 3px solid #3498db;
       min-height: 20px;
+    }
+    
+    .reflection-question {
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 8px;
     }
     
     .add-btn {
@@ -158,6 +221,11 @@
       font-style: italic;
     }
     
+    /* 숨김 처리 */
+    .hidden {
+      display: none !important;
+    }
+    
     /* 인쇄 시 스타일 */
     @media print {
       body {
@@ -165,7 +233,7 @@
         padding: 0;
         max-width: none;
       }
-      .download-section {
+      .download-section, .template-selector {
         display: none;
       }
       section {
@@ -173,7 +241,7 @@
         border: 1px solid #ddd;
         page-break-inside: avoid;
       }
-      input, textarea {
+      input, textarea, select {
         border: none !important;
         border-bottom: 1px solid #333 !important;
         background: transparent !important;
@@ -190,8 +258,19 @@
 </head>
 <body>
   <div id="worksheet-content">
+    <!-- 템플릿 선택 -->
+    <section class="template-selector">
+      <h3>🎯 빠른 템플릿 선택</h3>
+      <button class="template-btn" onclick="applyTemplate('literature')">📚 문학</button>
+      <button class="template-btn" onclick="applyTemplate('movie')">🎬 영화/드라마</button>
+      <button class="template-btn" onclick="applyTemplate('news')">📰 시사/뉴스</button>
+      <button class="template-btn" onclick="applyTemplate('science')">🧪 과학/탐구</button>
+      <button class="template-btn" onclick="applyTemplate('history')">📜 역사</button>
+      <button class="template-btn active" onclick="applyTemplate('custom')">✏️ 직접 만들기</button>
+    </section>
+
     <section>
-      <h1><input type="text" id="worksheetTitle" value="step-inside" style="font-size: 28px; font-weight: bold; text-align: center; border: none; background: transparent;" /></h1>
+      <h1><input type="text" id="worksheetTitle" value="step-inside 학습지" style="font-size: 28px; font-weight: bold; text-align: center; border: none; background: transparent;" /></h1>
       <h2><input type="text" id="worksheetSubtitle" placeholder="부제목을 입력하세요" style="font-size: 20px; text-align: center; border: none; background: transparent;" /></h2>
       
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
@@ -200,22 +279,61 @@
       </div>
       
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px;">
-        <p><strong>학교:</strong> <input type="text" id="school" placeholder="○○중학교" style="border: none; border-bottom: 1px solid #ccc; background: transparent;" /></p>
+        <p><strong>학교:</strong> <input type="text" id="school" placeholder="○○학교" style="border: none; border-bottom: 1px solid #ccc; background: transparent;" /></p>
         <p><strong>학년반:</strong> <input type="text" id="classInfo" placeholder="○학년 ○반" style="border: none; border-bottom: 1px solid #ccc; background: transparent;" /></p>
         <p><strong>이름:</strong> <input type="text" id="studentName" placeholder="이름" style="border: none; border-bottom: 1px solid #ccc; background: transparent;" /></p>
       </div>
     </section>
 
+    <!-- 콘텐츠 정보 -->
     <section>
-      <h2>1단계. 영상 시청: 새롭게 알게 된 내용 정리하기</h2>
-      <p>
-        아래 영상을 시청하고, 새롭게 알게 된 내용을 적어보세요.<br>
-        <a href="https://youtu.be/IilOyOQGLJk?si=YBh6lU9ICGCv-GJo" target="_blank">▶ 안중근 의사와 홍범도 장군 이야기 시청하기</a>
+      <h2>콘텐츠 정보</h2>
+      <div class="content-info">
+        <div class="content-info-grid">
+          <div>
+            <label for="contentType">콘텐츠 유형:</label>
+            <select id="contentType" onchange="updateTargetOptions()">
+              <option value="video">📹 영상</option>
+              <option value="book">📚 책</option>
+              <option value="movie">🎬 영화/드라마</option>
+              <option value="article">📰 기사/뉴스</option>
+              <option value="podcast">🎧 팟캐스트</option>
+              <option value="experiment">🧪 실험/관찰</option>
+              <option value="other">🔗 기타</option>
+            </select>
+          </div>
+          <div>
+            <label for="contentTitle">제목:</label>
+            <input type="text" id="contentTitle" placeholder="예: 어린왕자, 기생충, TED 강연 제목 등" />
+          </div>
+        </div>
+        <label for="contentLink">링크 (선택사항):</label>
+        <input type="url" id="contentLink" placeholder="https://..." />
+        
+        <label for="targetType">대화 대상:</label>
+        <select id="targetType" onchange="checkCustomTarget()">
+          <option value="character">등장인물</option>
+          <option value="speaker">화자/연사</option>
+          <option value="author">작가/저자</option>
+          <option value="protagonist">주인공</option>
+          <option value="interviewee">인터뷰이</option>
+          <option value="scientist">과학자/연구자</option>
+          <option value="custom">직접 입력</option>
+        </select>
+        <input type="text" id="customTarget" class="hidden" placeholder="대화 대상을 입력하세요" style="margin-top: 10px;" />
+      </div>
+    </section>
+
+    <section>
+      <h2><span id="step1Title">1단계. 콘텐츠 감상: 새롭게 알게 된 내용 정리하기</span></h2>
+      <p id="step1Description">
+        콘텐츠를 감상하고, 새롭게 알게 된 내용이나 인상 깊은 부분을 정리해보세요.
+        <span id="contentLinkDisplay"></span>
       </p>
       
       <div id="learningContent">
         <div class="learning-item">
-          <input type="text" placeholder="새롭게 알게 된 내용을 적어보세요" />
+          <input type="text" placeholder="새롭게 알게 된 내용이나 인상 깊은 부분을 적어보세요" />
           <button type="button" onclick="removeLearningItem(this)" class="remove-btn">✕</button>
         </div>
       </div>
@@ -223,8 +341,8 @@
     </section>
     
     <section>
-      <h2>2단계. 인물에게 질문 던지기</h2>
-      <p>영상 속 인물들에게 묻고 싶은 질문을 만들어보세요.</p>
+      <h2><span id="step2Title">2단계. 대화하기: 질문 만들기</span></h2>
+      <p id="step2Description">콘텐츠 속 <span class="target-name">대상</span>에게 묻고 싶은 질문을 만들어보세요.</p>
       
       <div id="questionContent">
         <div class="question-item">
@@ -233,7 +351,7 @@
         </div>
         <div class="question-item">
           <label>추가 질문 1:</label>
-          <input type="text" placeholder="인물에게 묻고 싶은 질문을 적어보세요" />
+          <input type="text" placeholder="묻고 싶은 질문을 적어보세요" />
           <button type="button" onclick="removeQuestionItem(this)" class="remove-btn">✕</button>
         </div>
       </div>
@@ -241,33 +359,41 @@
     </section>
     
     <section>
-      <h2>3단계. 질문에 답해보기</h2>
-      <p>2단계에서 만든 질문들에 인물의 입장이 되어 답해보세요.</p>
+      <h2><span id="step3Title">3단계. 공감하기: 입장 바꿔 생각하기</span></h2>
+      <p id="step3Description">2단계에서 만든 질문들에 <span class="target-name">대상</span>의 입장이 되어 답해보세요.</p>
       
       <div id="answerContent">
         <div class="answer-item">
           <label id="answer-label-0">기본 질문에 대한 답:</label>
-          <div class="question-preview" id="question-preview-0" style="font-style: italic; color: #666; margin-bottom: 8px; padding: 8px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #3498db;">질문: 왜 그런 선택을 하셨나요?</div>
-          <textarea rows="3" placeholder="인물의 입장에서 답변해보세요"></textarea>
+          <div class="question-preview" id="question-preview-0">질문: 왜 그런 선택을 하셨나요?</div>
+          <textarea rows="3" placeholder="그들의 입장에서 답변해보세요"></textarea>
         </div>
         <div class="answer-item">
           <label id="answer-label-1">추가 질문 1에 대한 답:</label>
-          <div class="question-preview" id="question-preview-1" style="font-style: italic; color: #666; margin-bottom: 8px; padding: 8px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #3498db;">질문: 인물에게 묻고 싶은 질문을 적어보세요</div>
-          <textarea rows="3" placeholder="인물의 입장에서 답변해보세요"></textarea>
+          <div class="question-preview" id="question-preview-1">질문: 묻고 싶은 질문을 적어보세요</div>
+          <textarea rows="3" placeholder="그들의 입장에서 답변해보세요"></textarea>
         </div>
       </div>
     </section>
     
     <section>
-      <h2>4단계. 나의 가치관과 마주하며 성찰하기</h2>
-      <label>Q. 영상 속 인물들의 이야기를 보며 어떤 느낌이나 감정이 들었나요?</label>
-      <textarea id="myFeelings" rows="3" placeholder="인상 깊었던 장면이나 그때 느꼈던 감정을 솔직하게 적어보세요"></textarea>
-      
-      <label>Q. 이들의 선택과 행동에서 본받고 싶은 점은 무엇인가요?</label>
-      <textarea id="roleModel" rows="3" placeholder="앞으로 실천하고 싶은 구체적인 행동을 적어보세요"></textarea>
-      
-      <label>Q. 나는 어떤 사람으로 살아가고 싶은가요?</label>
-      <textarea id="lifeGoal" rows="3" placeholder="나의 다짐이나 목표를 적어보세요"></textarea>
+      <h2><span id="step4Title">4단계. 나와 연결하여 성찰하기</span></h2>
+      <div id="reflectionContent">
+        <div class="reflection-item">
+          <div class="reflection-question">Q. 이 콘텐츠를 보며 어떤 느낌이나 감정이 들었나요?</div>
+          <textarea rows="3" placeholder="인상 깊었던 장면이나 그때 느꼈던 감정을 솔직하게 적어보세요"></textarea>
+        </div>
+        
+        <div class="reflection-item">
+          <div class="reflection-question">Q. 새롭게 깨달은 점이나 배운 점은 무엇인가요?</div>
+          <textarea rows="3" placeholder="이전에 몰랐던 것, 다시 생각하게 된 것을 적어보세요"></textarea>
+        </div>
+        
+        <div class="reflection-item">
+          <div class="reflection-question">Q. 나의 삶에 어떻게 적용할 수 있을까요?</div>
+          <textarea rows="3" placeholder="앞으로 실천하고 싶은 구체적인 행동이나 다짐을 적어보세요"></textarea>
+        </div>
+      </div>
     </section>
     
     <section class="download-section">
@@ -280,6 +406,222 @@
   </div>
 
   <script>
+    // 템플릿 데이터
+    const templates = {
+      literature: {
+        title: "문학작품 step-inside",
+        contentType: "book",
+        targetType: "character",
+        step1: "작품 읽기: 인상 깊은 구절이나 장면 정리하기",
+        step2: "등장인물과 대화하기",
+        step3: "등장인물의 입장에서 답하기",
+        reflections: [
+          "Q. 이 작품을 읽으며 어떤 감정을 느꼈나요?",
+          "Q. 가장 기억에 남는 장면은 무엇이고, 왜 그런가요?",
+          "Q. 나라면 주인공과 같은 상황에서 어떻게 했을까요?"
+        ]
+      },
+      movie: {
+        title: "영화/드라마 step-inside",
+        contentType: "movie",
+        targetType: "character",
+        step1: "영상 감상: 주요 장면과 대사 정리하기",
+        step2: "등장인물 또는 감독에게 질문하기",
+        step3: "그들의 관점에서 답하기",
+        reflections: [
+          "Q. 어떤 장면이 가장 인상 깊었나요?",
+          "Q. 작품이 전하고자 하는 메시지는 무엇일까요?",
+          "Q. 이 작품이 나에게 준 영향은 무엇인가요?"
+        ]
+      },
+      news: {
+        title: "시사 step-inside",
+        contentType: "article",
+        targetType: "interviewee",
+        step1: "기사 읽기: 핵심 사실과 쟁점 정리하기",
+        step2: "관련 인물들에게 질문하기",
+        step3: "다양한 입장에서 답하기",
+        reflections: [
+          "Q. 이 이슈에 대한 나의 첫 느낌은 어떤가요?",
+          "Q. 서로 다른 입장들을 이해하게 되었나요?",
+          "Q. 이 문제 해결을 위해 내가 할 수 있는 일은?"
+        ]
+      },
+      science: {
+        title: "과학탐구 step-inside",
+        contentType: "experiment",
+        targetType: "scientist",
+        step1: "실험/관찰: 발견한 현상과 데이터 정리하기",
+        step2: "과학자의 관점에서 질문 만들기",
+        step3: "가설을 세우고 설명하기",
+        reflections: [
+          "Q. 가장 놀라웠던 발견은 무엇인가요?",
+          "Q. 이 현상이 일상생활과 어떤 연관이 있을까요?",
+          "Q. 더 알아보고 싶은 것은 무엇인가요?"
+        ]
+      },
+      history: {
+        title: "역사 step-inside",
+        contentType: "video",
+        targetType: "character",
+        step1: "역사 콘텐츠 감상: 시대적 배경과 사건 정리하기",
+        step2: "역사적 인물에게 질문하기",
+        step3: "그 시대의 관점에서 답하기",
+        reflections: [
+          "Q. 그들의 선택을 보며 어떤 느낌이 들었나요?",
+          "Q. 역사에서 배운 교훈은 무엇인가요?",
+          "Q. 현재의 나는 어떤 가치관을 갖고 살아가고 있나요?"
+        ]
+      },
+      custom: {
+        title: "step-inside 학습지",
+        contentType: "other",
+        targetType: "custom",
+        step1: "콘텐츠 감상: 새롭게 알게 된 내용 정리하기",
+        step2: "대화하기: 질문 만들기",
+        step3: "공감하기: 입장 바꿔 생각하기",
+        reflections: [
+          "Q. 이 콘텐츠를 보며 어떤 느낌이나 감정이 들었나요?",
+          "Q. 새롭게 깨달은 점이나 배운 점은 무엇인가요?",
+          "Q. 나의 삶에 어떻게 적용할 수 있을까요?"
+        ]
+      }
+    };
+
+    // 템플릿 적용
+    function applyTemplate(templateName) {
+      const template = templates[templateName];
+      
+      // 버튼 활성화 상태 변경
+      document.querySelectorAll('.template-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // 템플릿 데이터 적용
+      document.getElementById('worksheetTitle').value = template.title;
+      document.getElementById('contentType').value = template.contentType;
+      document.getElementById('targetType').value = template.targetType;
+      
+      // 단계별 제목 업데이트
+      document.getElementById('step1Title').textContent = `1단계. ${template.step1}`;
+      document.getElementById('step2Title').textContent = `2단계. ${template.step2}`;
+      document.getElementById('step3Title').textContent = `3단계. ${template.step3}`;
+      
+      // 성찰 질문 업데이트
+      updateReflectionQuestions(template.reflections);
+      
+      // 대상 업데이트
+      updateTargetOptions();
+      checkCustomTarget();
+      
+      // 자동 저장
+      autoSave();
+    }
+
+    // 성찰 질문 업데이트
+    function updateReflectionQuestions(questions) {
+      const container = document.getElementById('reflectionContent');
+      container.innerHTML = '';
+      
+      questions.forEach((question, index) => {
+        const item = document.createElement('div');
+        item.className = 'reflection-item';
+        item.innerHTML = `
+          <div class="reflection-question">${question}</div>
+          <textarea rows="3" placeholder="답변을 적어보세요"></textarea>
+        `;
+        container.appendChild(item);
+        
+        // 이벤트 리스너 추가
+        item.querySelector('textarea').addEventListener('input', autoSave);
+      });
+    }
+
+    // 콘텐츠 유형에 따른 대상 옵션 업데이트
+    function updateTargetOptions() {
+      const contentType = document.getElementById('contentType').value;
+      const targetSelect = document.getElementById('targetType');
+      
+      // 기본 옵션 유지하고 콘텐츠별 추가 옵션 설정
+      const options = {
+        video: ['speaker', 'interviewee', 'character'],
+        book: ['author', 'character', 'protagonist'],
+        movie: ['character', 'protagonist', 'director'],
+        article: ['author', 'interviewee', 'expert'],
+        podcast: ['speaker', 'host', 'guest'],
+        experiment: ['scientist', 'researcher', 'observer'],
+        other: ['custom']
+      };
+      
+      // 선택된 콘텐츠 유형에 맞는 첫 번째 옵션 선택
+      if (options[contentType] && options[contentType].length > 0) {
+        targetSelect.value = options[contentType][0];
+      }
+      
+      updateTargetName();
+    }
+
+    // 커스텀 대상 체크
+    function checkCustomTarget() {
+      const targetType = document.getElementById('targetType').value;
+      const customInput = document.getElementById('customTarget');
+      
+      if (targetType === 'custom') {
+        customInput.classList.remove('hidden');
+      } else {
+        customInput.classList.add('hidden');
+      }
+      
+      updateTargetName();
+    }
+
+    // 대상 이름 업데이트
+    function updateTargetName() {
+      const targetType = document.getElementById('targetType').value;
+      const customTarget = document.getElementById('customTarget').value;
+      const targetNames = {
+        character: '등장인물',
+        speaker: '화자',
+        author: '작가',
+        protagonist: '주인공',
+        interviewee: '인터뷰이',
+        scientist: '과학자',
+        director: '감독',
+        host: '진행자',
+        guest: '게스트',
+        researcher: '연구자',
+        observer: '관찰자',
+        expert: '전문가'
+      };
+      
+      let targetName = targetType === 'custom' && customTarget ? customTarget : (targetNames[targetType] || '대상');
+      
+      // 모든 target-name 클래스 요소 업데이트
+      document.querySelectorAll('.target-name').forEach(el => {
+        el.textContent = targetName;
+      });
+      
+      // 질문 placeholder 업데이트
+      document.querySelectorAll('#questionContent input').forEach(input => {
+        if (!input.value) {
+          input.placeholder = input.placeholder.replace(/.*에게/, `${targetName}에게`);
+        }
+      });
+    }
+
+    // 콘텐츠 링크 표시
+    function updateContentLink() {
+      const link = document.getElementById('contentLink').value;
+      const display = document.getElementById('contentLinkDisplay');
+      
+      if (link) {
+        display.innerHTML = `<br><a href="${link}" target="_blank">▶ 콘텐츠 보기</a>`;
+      } else {
+        display.innerHTML = '';
+      }
+    }
+
     // 로딩 메시지 표시/숨김
     function showLoading() {
       document.getElementById('loading-message').style.display = 'block';
@@ -291,16 +633,16 @@
       document.querySelectorAll('.download-btn').forEach(btn => btn.disabled = false);
     }
     
-    // 파일명 생성 (학교, 학년반, 이름 + 날짜)
+    // 파일명 생성
     function generateFileName() {
-      const school = document.getElementById('school').value.trim();
-      const classInfo = document.getElementById('classInfo').value.trim();
+      const contentType = document.getElementById('contentType').value;
+      const contentTitle = document.getElementById('contentTitle').value.trim().replace(/[^가-힣a-zA-Z0-9]/g, '');
       const studentName = document.getElementById('studentName').value.trim();
-      const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const date = new Date().toISOString().split('T')[0];
       
-      let fileName = '학습지';
-      if (school) fileName += `_${school}`;
-      if (classInfo) fileName += `_${classInfo}`;
+      let fileName = 'step-inside';
+      if (contentType) fileName += `_${contentType}`;
+      if (contentTitle) fileName += `_${contentTitle}`;
       if (studentName) fileName += `_${studentName}`;
       fileName += `_${date}`;
       
@@ -312,12 +654,12 @@
       const replacements = [];
       
       // 모든 input과 textarea 요소 찾기
-      const inputs = document.querySelectorAll('input[type="text"], textarea');
+      const inputs = document.querySelectorAll('input[type="text"], input[type="url"], textarea, select');
       
       inputs.forEach(input => {
         // 값이 있는 경우에만 처리
         const value = input.value.trim();
-        if (value) {
+        if (value && input.tagName !== 'SELECT') {
           // 새로운 div 요소 생성
           const replacement = document.createElement('div');
           replacement.innerHTML = value;
@@ -349,6 +691,20 @@
           
           // 교체 실행
           input.parentNode.replaceChild(replacement, input);
+        } else if (input.tagName === 'SELECT') {
+          // SELECT 요소의 경우 선택된 텍스트로 변환
+          const selectedText = input.options[input.selectedIndex].text;
+          const replacement = document.createElement('span');
+          replacement.textContent = selectedText;
+          replacement.style.cssText = input.style.cssText;
+          
+          replacements.push({
+            original: input,
+            replacement: replacement,
+            parent: input.parentNode
+          });
+          
+          input.parentNode.replaceChild(replacement, input);
         }
       });
       
@@ -367,9 +723,11 @@
       showLoading();
       
       try {
-        // 다운로드 섹션을 임시로 숨김
+        // 다운로드 섹션과 템플릿 선택기를 임시로 숨김
         const downloadSection = document.querySelector('.download-section');
+        const templateSelector = document.querySelector('.template-selector');
         downloadSection.style.display = 'none';
+        templateSelector.style.display = 'none';
         
         // 입력 필드를 텍스트로 변환
         const replacements = replaceInputsWithText();
@@ -384,8 +742,9 @@
         // 입력 필드 복원
         restoreInputs(replacements);
         
-        // 다운로드 섹션 다시 표시
+        // 다운로드 섹션과 템플릿 선택기 다시 표시
         downloadSection.style.display = 'block';
+        templateSelector.style.display = 'block';
         
         // 캔버스를 이미지로 변환하여 다운로드
         const link = document.createElement('a');
@@ -405,9 +764,11 @@
       showLoading();
       
       try {
-        // 다운로드 섹션을 임시로 숨김
+        // 다운로드 섹션과 템플릿 선택기를 임시로 숨김
         const downloadSection = document.querySelector('.download-section');
+        const templateSelector = document.querySelector('.template-selector');
         downloadSection.style.display = 'none';
+        templateSelector.style.display = 'none';
         
         // 입력 필드를 텍스트로 변환
         const replacements = replaceInputsWithText();
@@ -422,8 +783,9 @@
         // 입력 필드 복원
         restoreInputs(replacements);
         
-        // 다운로드 섹션 다시 표시
+        // 다운로드 섹션과 템플릿 선택기 다시 표시
         downloadSection.style.display = 'block';
+        templateSelector.style.display = 'block';
         
         const imgData = canvas.toDataURL('image/png');
         
@@ -439,7 +801,7 @@
         const imgWidth = 190; // A4 너비 (여백 고려)
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
-        const pageHeight = 257; // A4 높이에서 상하 여백 20mm씩 제외 (297-40=257)
+        const pageHeight = 257; // A4 높이에서 상하 여백 20mm씩 제외
         let heightLeft = imgHeight;
         let position = 20; // 상단 여백 20mm
         
@@ -449,7 +811,7 @@
         
         // 추가 페이지가 필요한 경우
         while (heightLeft > 0) {
-          position = heightLeft - imgHeight + 20; // 상단 여백 20mm
+          position = heightLeft - imgHeight + 20;
           pdf.addPage();
           pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
           heightLeft -= pageHeight;
@@ -474,24 +836,28 @@
         school: document.getElementById('school').value,
         classInfo: document.getElementById('classInfo').value,
         studentName: document.getElementById('studentName').value,
+        contentType: document.getElementById('contentType').value,
+        contentTitle: document.getElementById('contentTitle').value,
+        contentLink: document.getElementById('contentLink').value,
+        targetType: document.getElementById('targetType').value,
+        customTarget: document.getElementById('customTarget').value,
         learningItems: Array.from(document.querySelectorAll('#learningContent input')).map(input => input.value),
         questionItems: Array.from(document.querySelectorAll('#questionContent input')).map(input => input.value),
         answerItems: Array.from(document.querySelectorAll('#answerContent textarea')).map(textarea => textarea.value),
-        myFeelings: document.getElementById('myFeelings').value,
-        roleModel: document.getElementById('roleModel').value,
-        lifeGoal: document.getElementById('lifeGoal').value
+        reflectionItems: Array.from(document.querySelectorAll('#reflectionContent textarea')).map(textarea => textarea.value)
       };
-      localStorage.setItem('moralWorksheet', JSON.stringify(data));
+      localStorage.setItem('stepInsideWorksheet', JSON.stringify(data));
     }
     
     // 저장된 데이터 불러오기
     function loadSavedData() {
-      const saved = localStorage.getItem('moralWorksheet');
+      const saved = localStorage.getItem('stepInsideWorksheet');
       if (saved) {
         const data = JSON.parse(saved);
         
-        // 기본 필드들 복원 (날짜는 이미 설정되어 있지 않은 경우에만)
-        ['worksheetTitle', 'worksheetSubtitle', 'subject', 'school', 'classInfo', 'studentName', 'myFeelings', 'roleModel', 'lifeGoal'].forEach(key => {
+        // 기본 필드들 복원
+        ['worksheetTitle', 'worksheetSubtitle', 'subject', 'school', 'classInfo', 'studentName', 
+         'contentType', 'contentTitle', 'contentLink', 'targetType', 'customTarget'].forEach(key => {
           const element = document.getElementById(key);
           if (element && data[key]) element.value = data[key];
         });
@@ -505,11 +871,9 @@
         
         // 학습 내용 복원
         if (data.learningItems && data.learningItems.length > 1) {
-          // 기본 1개 제외하고 추가
           for (let i = 1; i < data.learningItems.length; i++) {
             addLearningItem();
           }
-          // 값 설정
           document.querySelectorAll('#learningContent input').forEach((input, index) => {
             if (data.learningItems[index]) input.value = data.learningItems[index];
           });
@@ -517,7 +881,6 @@
         
         // 질문 내용 복원
         if (data.questionItems && data.questionItems.length > 2) {
-          // 기본 2개 제외하고 추가
           for (let i = 2; i < data.questionItems.length; i++) {
             addQuestionItem();
           }
@@ -535,10 +898,21 @@
           });
         }
         
+        // 성찰 내용 복원
+        if (data.reflectionItems) {
+          document.querySelectorAll('#reflectionContent textarea').forEach((textarea, index) => {
+            if (data.reflectionItems[index]) textarea.value = data.reflectionItems[index];
+          });
+        }
+        
+        // UI 업데이트
+        updateTargetOptions();
+        checkCustomTarget();
+        updateContentLink();
+        
         // 질문 미리보기 업데이트
         setTimeout(() => {
           updateQuestionPreviews();
-          // 복원된 질문 입력 필드들에 이벤트 리스너 추가
           document.querySelectorAll('#questionContent input').forEach(input => {
             input.addEventListener('input', updateQuestionPreviews);
           });
@@ -552,7 +926,7 @@
       const newItem = document.createElement('div');
       newItem.className = 'learning-item';
       newItem.innerHTML = `
-        <input type="text" placeholder="새롭게 알게 된 내용을 적어보세요" />
+        <input type="text" placeholder="새롭게 알게 된 내용이나 인상 깊은 부분을 적어보세요" />
         <button type="button" onclick="removeLearningItem(this)" class="remove-btn">✕</button>
       `;
       container.appendChild(newItem);
@@ -578,7 +952,7 @@
       newItem.className = 'question-item';
       newItem.innerHTML = `
         <label>추가 질문 ${questionCount - 1}:</label>
-        <input type="text" placeholder="인물에게 묻고 싶은 질문을 적어보세요" />
+        <input type="text" placeholder="묻고 싶은 질문을 적어보세요" />
         <button type="button" onclick="removeQuestionItem(this)" class="remove-btn">✕</button>
       `;
       container.appendChild(newItem);
@@ -589,8 +963,8 @@
       newAnswer.className = 'answer-item';
       newAnswer.innerHTML = `
         <label id="answer-label-${questionCount}">추가 질문 ${questionCount - 1}에 대한 답:</label>
-        <div class="question-preview" id="question-preview-${questionCount}" style="font-style: italic; color: #666; margin-bottom: 8px; padding: 8px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #3498db;">질문: 인물에게 묻고 싶은 질문을 적어보세요</div>
-        <textarea rows="3" placeholder="인물의 입장에서 답변해보세요"></textarea>
+        <div class="question-preview" id="question-preview-${questionCount}">질문: 묻고 싶은 질문을 적어보세요</div>
+        <textarea rows="3" placeholder="그들의 입장에서 답변해보세요"></textarea>
       `;
       answerContainer.appendChild(newAnswer);
       
@@ -679,12 +1053,18 @@
       // 모든 입력 필드에 자동 저장 이벤트 리스너 추가
       document.addEventListener('input', autoSave);
       
+      // 콘텐츠 링크 업데이트 이벤트
+      document.getElementById('contentLink').addEventListener('input', updateContentLink);
+      document.getElementById('customTarget').addEventListener('input', updateTargetName);
+      
       // 질문 입력 필드에 미리보기 업데이트 이벤트 리스너 추가
       document.querySelectorAll('#questionContent input').forEach(input => {
         input.addEventListener('input', updateQuestionPreviews);
       });
       
-      // 초기 질문 미리보기 업데이트
+      // 초기 업데이트
+      updateTargetName();
+      updateContentLink();
       updateQuestionPreviews();
     });
   </script>
